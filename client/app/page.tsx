@@ -17,8 +17,10 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setResponse('Loading...')
+    
     try {
-      const res = await fetch('http://localhost:3000/api/langflow', {
+      const res = await fetch('/api/langflow', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -26,12 +28,21 @@ export default function Home() {
         body: JSON.stringify({ question }),
       })
       
+      if (!res.ok) {
+        throw new Error('API request failed')
+      }
+      
       const data = await res.json()
+      
+      if (data.error) {
+        throw new Error(data.error)
+      }
+      
       setResponse(data.response)
       setQuestion('')
     } catch (error) {
       console.error('Error:', error)
-      setResponse('Error occurred while fetching response')
+      setResponse('Error occurred while fetching response. Please try again.')
     }
   }
 
