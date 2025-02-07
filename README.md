@@ -8,7 +8,10 @@
 
 
 # Tools Used
+For the backend, I used Langflow to create the AI agent and AstraDB to store the chat history.
 
-Langflow 
-Datastax 
-Next.js
+![Langflow Agent](./imgs/langflow.png)
+
+For frontend, I used Next.js, Shadcn UI, Lucide Icons, and Tailwind CSS.
+
+![Client UI](./imgs/client.png)

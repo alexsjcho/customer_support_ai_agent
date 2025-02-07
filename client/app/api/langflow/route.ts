@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server';
 import { langflowClient } from '@/lib/langflowAPI';
 
+interface MessageOutput {
+    text?: string;
+    message?: {
+        text?: string;
+    };
+    answer?: string;
+}
+
+interface LangflowOutput {
+    outputs?: MessageOutput[];
+    inputs?: {
+        input_value?: string;
+    };
+}
+
+interface LangflowResponse {
+    outputs?: LangflowOutput[];
+    session_id?: string;
+}
+
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -14,7 +34,7 @@ export async function POST(request: Request) {
         }
 
         console.log('Processing question:', question);
-        const response = await langflowClient.runFlow(question);
+        const response = await langflowClient.runFlow(question) as LangflowResponse;
         
         console.log('Full response structure:', JSON.stringify(response, null, 2));
         
@@ -22,14 +42,16 @@ export async function POST(request: Request) {
             throw new Error('No response received from LangFlow');
         }
 
-        // More detailed response handling
-        let responseText;
+        let responseText: string;
+        const outputs = response.outputs?.[0]?.outputs;
         
-        if (response.outputs?.[0]?.outputs?.length > 0) {
+        if (outputs && outputs.length > 0) {
             // Standard output format
-            responseText = response.outputs[0].outputs[0]?.text ||
-                         response.outputs[0].outputs[0]?.message?.text ||
-                         response.outputs[0].outputs[0]?.answer;
+            const firstOutput = outputs[0];
+            responseText = firstOutput?.text ?? 
+                         firstOutput?.message?.text ?? 
+                         firstOutput?.answer ??
+                         'No response text available';
         } else if (response.outputs?.[0]?.inputs?.input_value) {
             // When only input is reflected back
             responseText = "I received your message: " + response.outputs[0].inputs.input_value + 
@@ -45,7 +67,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ 
             response: responseText,
-            raw_response: response // Include raw response for debugging
+            raw_response: response
         });
 
     } catch (error) {
