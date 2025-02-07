@@ -30,21 +30,17 @@ export async function POST(request: Request) {
             responseText = response.outputs[0].outputs[0]?.text ||
                          response.outputs[0].outputs[0]?.message?.text ||
                          response.outputs[0].outputs[0]?.answer;
-        } else if (response.outputs?.[0]?.inputs?.text) {
-            // Input reflection format
-            responseText = response.outputs[0].inputs.text;
+        } else if (response.outputs?.[0]?.inputs?.input_value) {
+            // When only input is reflected back
+            responseText = "I received your message: " + response.outputs[0].inputs.input_value + 
+                         ". However, I'm having trouble processing it at the moment. Please try again.";
         } else if (response.session_id) {
             // Session-only response
-            responseText = "Session initialized, but no response generated yet.";
-        } else if (typeof response === 'string') {
-            // Direct string response
-            responseText = response;
-        } else if (response.result) {
-            // Result field response
-            responseText = response.result;
+            responseText = "I've received your message but I'm having trouble generating a response. " +
+                         "Please check the LangFlow configuration and try again.";
         } else {
             console.error('Unexpected response format:', response);
-            responseText = "Unable to process response format";
+            responseText = "I'm currently experiencing technical difficulties. Please try again later.";
         }
 
         return NextResponse.json({ 

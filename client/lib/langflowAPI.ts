@@ -44,7 +44,9 @@ export class LangflowClient {
     private baseURL: string;
     private applicationToken: string;
     private dbClient: DataAPIClient;
-    private db: any; // Type this properly based on your needs
+    private db: any;
+    private readonly COLLECTION_NAME = 'chat_messages';
+    private collectionInitialized = false;
 
     constructor() {
         if (!APPLICATION_TOKEN) {
@@ -61,17 +63,71 @@ export class LangflowClient {
         this.dbClient = new DataAPIClient(ASTRA_DB_TOKEN);
         this.db = this.dbClient.db(ASTRA_DB_URL);
         
-        // Test database connection
-        this.testDbConnection();
+        // Initialize database connection and collection
+        this.initializeDatabase();
     }
 
-    private async testDbConnection() {
+    private async initializeDatabase() {
         try {
-            const colls = await this.db.listCollections();
-            console.log('Connected to AstraDB:', colls);
+            // List existing collections
+            const collections = await this.db.listCollections();
+            console.log('Existing collections:', collections);
+
+            // Check if our collection exists
+            const collectionExists = collections.some(
+                (coll: { name: string }) => coll.name === this.COLLECTION_NAME
+            );
+
+            // Create collection if it doesn't exist
+            if (!collectionExists) {
+                console.log(`Creating collection: ${this.COLLECTION_NAME}`);
+                await this.db.createCollection(this.COLLECTION_NAME);
+                
+                // Create indexes for better query performance
+                const collection = this.db.collection(this.COLLECTION_NAME);
+                await collection.createIndex({ timestamp: 1 });
+                await collection.createIndex({ type: 1 });
+            }
+
+            this.collectionInitialized = true;
+            console.log('Database initialization complete');
         } catch (error) {
-            console.error('Error connecting to AstraDB:', error);
+            console.error('Error initializing database:', error);
             throw error;
+        }
+    }
+
+    private async ensureCollection() {
+        if (!this.collectionInitialized) {
+            await this.initializeDatabase();
+        }
+    }
+
+    private async storeMessage(message: string) {
+        try {
+            await this.ensureCollection();
+            await this.db.collection(this.COLLECTION_NAME).insertOne({
+                type: 'user',
+                content: message,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Error storing message in AstraDB:', error);
+            // Don't throw the error to prevent blocking the main flow
+        }
+    }
+
+    private async storeResponse(response: InitResponse) {
+        try {
+            await this.ensureCollection();
+            await this.db.collection(this.COLLECTION_NAME).insertOne({
+                type: 'assistant',
+                content: response.result || JSON.stringify(response),
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Error storing response in AstraDB:', error);
+            // Don't throw the error to prevent blocking the main flow
         }
     }
 
@@ -197,30 +253,6 @@ export class LangflowClient {
         } catch (error) {
             console.error('Error running flow:', error);
             throw error;
-        }
-    }
-
-    private async storeMessage(message: string) {
-        try {
-            await this.db.collection('chat_messages').insertOne({
-                type: 'user',
-                content: message,
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            console.error('Error storing message in AstraDB:', error);
-        }
-    }
-
-    private async storeResponse(response: InitResponse) {
-        try {
-            await this.db.collection('chat_messages').insertOne({
-                type: 'assistant',
-                content: response.result || JSON.stringify(response),
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            console.error('Error storing response in AstraDB:', error);
         }
     }
 }
