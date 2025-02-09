@@ -25,24 +25,25 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ message: question }),
       })
       
       if (!res.ok) {
-        throw new Error('API request failed')
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
       
       const data = await res.json()
       
       if (data.error) {
-        throw new Error(data.error)
+        console.error('API Error:', data.error, data.details);
+        throw new Error(data.error);
       }
       
-      setResponse(data.response)
+      setResponse(data.response || 'No response received');
       setQuestion('')
     } catch (error) {
       console.error('Error:', error)
-      setResponse('Error occurred while fetching response. Please try again.')
+      setResponse(error instanceof Error ? error.message : 'Error occurred while fetching response. Please try again.')
     }
   }
 
