@@ -49,6 +49,7 @@ export class LangflowClient {
 
         this.baseURL = BASE_API_URL;
         this.applicationToken = APPLICATION_TOKEN;
+        this.dbClient = new DataAPIClient();
         
         // Initialize AstraDB client if token exists
         if (process.env.ASTRA_DB_TOKEN) {

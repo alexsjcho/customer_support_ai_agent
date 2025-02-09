@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // Enable static exports
-  basePath: process.env.NODE_ENV === 'production' ? '/customer_support_ai_agent' : '', // Replace with your repository name
+  output: 'export',  // Required for static site generation
+  basePath: '/customer_support_ai_agent', // Your actual repository name
   images: {
     unoptimized: true, // Required for static export
   },
-  // Disable server-side features since GitHub Pages is static
-  trailingSlash: true,
+  // Required for GitHub Pages
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/customer_support_ai_agent' : '',
 }
 
-export default nextConfig
+module.exports = nextConfig
