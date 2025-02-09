@@ -15,10 +15,13 @@ For the backend, I used Langflow to create the AI agent and AstraDB to store the
 
 For frontend, I used Next.js, Shadcn UI, Lucide Icons, and Tailwind CSS.
 
-![Client UI](./assets/client.png)
+## Client UI
+<img src="assets/client.png" alt="Client UI" width="800"/>
 
 # Demo
 
-![Demo Image](./assets/customer_support_agent_response.png)
+## Demo Image
+<img src="assets/customer_support_agent_response.png" alt="Demo Image" width="800"/>
 
-![Demo Video](./assets/video_demo.gif)
+## Video Demo
+<img src="assets/video_demo.gif" alt="Demo Video" width="800"/>
