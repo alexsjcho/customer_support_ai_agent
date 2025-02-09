@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "next build && touch out/.nojekyll && gh-pages -d out"
+    "deploy": "rm -rf out && rm -rf node_modules/.cache && next build && mkdir -p out && touch out/.nojekyll && gh-pages --dotfiles --dist out"
   },
   "dependencies": {
     "@datastax/astra-db-ts": "^1.5.0",
