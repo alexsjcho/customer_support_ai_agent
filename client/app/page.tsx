@@ -8,16 +8,30 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus, Send } from "lucide-react"
+import { Plus, Send, Loader2 } from "lucide-react"
+import ReactMarkdown from 'react-markdown'
 
 export default function Home() {
   const [question, setQuestion] = useState('')
   const [response, setResponse] = useState('')
+  const [messages, setMessages] = useState<Array<{type: 'user' | 'assistant', content: string}>>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [hovered, setHovered] = React.useState(false)
+
+  const handleNewChat = () => {
+    setQuestion('')
+    setResponse('')
+    setMessages([])
+    setIsLoading(false)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setResponse('Loading...')
+    setIsLoading(true)
+    setResponse('')
+    
+    // Add user message immediately
+    setMessages(prev => [...prev, { type: 'user', content: question }])
     
     try {
       const res = await fetch('/api/langflow', {
@@ -39,22 +53,28 @@ export default function Home() {
         throw new Error(data.error);
       }
       
-      setResponse(data.response || 'No response received');
+      const responseText = data.response || 'No response received';
+      setResponse(responseText)
+      setMessages(prev => [...prev, { type: 'assistant', content: responseText }])
       setQuestion('')
     } catch (error) {
       console.error('Error:', error)
-      setResponse(error instanceof Error ? error.message : 'Error occurred while fetching response. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Error occurred while fetching response. Please try again.'
+      setResponse(errorMessage)
+      setMessages(prev => [...prev, { type: 'assistant', content: errorMessage }])
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="bg-[#000000] min-h-screen flex items-center justify-center">
+    <div className="bg-[#000000] min-h-screen flex items-center justify-center p-4">
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative mx-auto min-w-[400px] max-w-[800px] items-center justify-center overflow-hidden"
+        className="relative mx-auto min-w-[400px] w-full max-w-[1000px] items-center justify-center overflow-hidden"
       >
-        <div className="relative flex w-full items-center justify-center p-4">
+        <div className="relative flex w-full items-center justify-center">
           <AnimatePresence>
             <div className="tracking-tightest flex select-none flex-col py-2 text-center text-3xl font-extrabold leading-none md:flex-col md:text-8xl lg:flex-row"></div>
             {hovered && (
@@ -78,8 +98,8 @@ export default function Home() {
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="z-20 w-full min-w-[400px] max-w-[800px] mx-auto">
-            <ScrollArea className="h-[360px] w-full overflow-auto p-1 dark-scroll-area">
+          <div className="z-20 w-full min-w-[400px] max-w-[1000px] mx-auto">
+            <ScrollArea className="h-[800px] min-h-[400px] w-full rounded-md border border-neutral-800 bg-black/40 p-4">
               <div className="px-6">
                 <div className="relative flex h-full w-full justify-center text-center">
                   <h1 className="flex select-none py-2 text-center text-2xl font-extrabold leading-none tracking-tight md:text-2xl lg:text-4xl">
@@ -112,20 +132,65 @@ Customer.                      </span>
                   How can I help you today?
                 </p>
               </div>
-              <div id="chat" className="h-38 w-full">
+              <div id="chat" className="h-full w-full">
                 <div className="">
                   <div className={cn("pt-4")}>
-                    <div className="space-y-2 overflow-hidden p-2">
-                      <p className="font-bold text-white">
-                        {response || 'No response yet'}
-                      </p>
+                    <div className="space-y-4 overflow-hidden p-2">
+                      {messages.map((message, index) => (
+                        <div 
+                          key={index} 
+                          className={cn(
+                            "rounded-lg p-4",
+                            message.type === 'user' 
+                              ? "bg-blue-500/10 border border-blue-500/20" 
+                              : "bg-neutral-900/50 border border-neutral-800"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={cn(
+                              "text-xs px-2 py-1 rounded",
+                              message.type === 'user' 
+                                ? "bg-blue-500/20 text-blue-300"
+                                : "bg-neutral-800 text-neutral-300"
+                            )}>
+                              {message.type === 'user' ? 'User Prompt' : 'AI Response'}
+                            </span>
+                          </div>
+                          <div className={cn(
+                            message.type === 'assistant' ? "prose prose-invert max-w-none" : "text-white"
+                          )}>
+                            {message.type === 'assistant' ? (
+                              <ReactMarkdown>
+                                {message.content}
+                              </ReactMarkdown>
+                            ) : (
+                              message.content
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Loading Message */}
+                      {isLoading && (
+                        <div className="rounded-lg p-4 bg-neutral-900/50 border border-neutral-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-300">
+                              Customer Agent
+                            </span>
+                          </div>
+                          <div className="text-white flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Customer Agent is working on response...
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             </ScrollArea>
 
-            <div className="relative mt-2 w-full min-w-[400px] max-w-[800px] mx-auto">
+            <div className="relative mt-4 w-full min-w-[400px] max-w-[1000px] mx-auto">
               <form onSubmit={handleSubmit}>
                 <div className="">
                   <Input
@@ -137,9 +202,11 @@ Customer.                      </span>
                 </div>
 
                 <Button
+                  type="button"
                   variant="default"
                   size="icon"
                   className="absolute left-1.5 top-1.5 h-7 rounded-sm dark-button"
+                  onClick={handleNewChat}
                 >
                   <Plus className="h-5 w-5 text-white" />
                   <span className="sr-only">New Chat</span>
