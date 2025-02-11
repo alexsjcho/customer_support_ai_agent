@@ -15,8 +15,8 @@ For the backend, I used Langflow to create the AI agent and AstraDB to store the
 
 For frontend, I used Next.js, Shadcn UI, Lucide Icons, and Tailwind CSS.
 
-## Client UI
-<img src="assets/client.png" alt="Client UI" width="800"/>
+# Langflow Architecture
+<img src="assets/langflow.png" alt="Langflow" width="800"/>
 
 # Demo
 
